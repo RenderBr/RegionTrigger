@@ -10,6 +10,7 @@ using TerrariaApi.Server;
 using Terraria;
 using TShockAPI;
 using TShockAPI.Hooks;
+using Terraria.ID;
 
 namespace RegionTrigger
 {
@@ -180,14 +181,13 @@ namespace RegionTrigger
 			if (rt?.HasEvent(Event.Itemban) != true)
 				return;
 
-			BitsByte control = args.Control;
+			BitsByte control = args.Control.bitsbyte;
 			if (control[5])
 			{
-				var itemName = ply.TPlayer.inventory[args.Item].Name;
+				var itemName = ply.TPlayer.inventory[args.SelectedItem].Name;
 				if (rt.ItemIsBanned(itemName) && !ply.HasPermission("regiontrigger.bypass.itemban"))
 				{
 					control[5] = false;
-					args.Control = control;
 					ply.Disable($"using a banned item ({itemName})", DisableFlags.WriteToLogAndConsole);
 					ply.SendErrorMessage($"You can't use {itemName} here.");
 				}
@@ -207,7 +207,7 @@ namespace RegionTrigger
 				return;
 
 			if (rt.HasPermission(args.Permission) && !args.Player.HasPermission("regiontrigger.bypass.tempperm"))
-				args.Handled = true;
+				return;
 		}
 
 		private static void OnRegionLeft(TSPlayer player, RtRegion region, RtPlayer data)
@@ -311,7 +311,7 @@ namespace RegionTrigger
 
 			if (rt.HasEvent(Event.Private) && !player.HasPermission("regiontrigger.bypass.private"))
 			{
-				player.Spawn();
+				player.Spawn(PlayerSpawnContext.SpawningIntoWorld);
 				player.SendErrorMessage("You don't have permission to enter that region.");
 			}
 		}
@@ -445,7 +445,7 @@ namespace RegionTrigger
 								args.Player.SendErrorMessage("Invalid events: {0}", invalids);
 							break;
 						case "pb":
-							if (short.TryParse(propValue, out var id) && id > 0 && id < Main.maxProjectileTypes)
+							if (short.TryParse(propValue, out var id) && id > 0 && id < 1022)
 							{
 								if (!isDel)
 								{
@@ -469,7 +469,6 @@ namespace RegionTrigger
 							}
 							else if (items.Count > 1)
 							{
-								TShock.Utils.SendMultipleMatchError(args.Player, items.Select(i => i.Name));
 							}
 							else
 							{
@@ -486,7 +485,7 @@ namespace RegionTrigger
 							}
 							break;
 						case "tb":
-							if (short.TryParse(propValue, out var tileid) && tileid >= 0 && tileid < Main.maxTileSets)
+							if (short.TryParse(propValue, out var tileid) && tileid >= 0 && tileid < TileID.Sets.AllTiles.Count())
 							{
 								if (!isDel)
 								{
